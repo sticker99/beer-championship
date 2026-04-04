@@ -4,18 +4,30 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 
 function BubbleBackground() {
+  const [bubbles, setBubbles] = useState<Array<{ left: string; width: string; height: string; duration: string; delay: string }>>([]);
+
+  useEffect(() => {
+    setBubbles(Array.from({ length: 20 }).map(() => ({
+      left: `${Math.random() * 100}%`,
+      width: `${10 + Math.random() * 30}px`,
+      height: `${10 + Math.random() * 30}px`,
+      duration: `${4 + Math.random() * 8}s`,
+      delay: `${Math.random() * 5}s`,
+    })));
+  }, []);
+
   return (
     <div className="bubbles-bg">
-      {Array.from({ length: 20 }).map((_, i) => (
+      {bubbles.map((b, i) => (
         <div
           key={i}
           className="bubble"
           style={{
-            left: `${Math.random() * 100}%`,
-            width: `${10 + Math.random() * 30}px`,
-            height: `${10 + Math.random() * 30}px`,
-            animationDuration: `${4 + Math.random() * 8}s`,
-            animationDelay: `${Math.random() * 5}s`,
+            left: b.left,
+            width: b.width,
+            height: b.height,
+            animationDuration: b.duration,
+            animationDelay: b.delay,
           }}
         />
       ))}

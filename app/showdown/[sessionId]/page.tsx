@@ -26,11 +26,34 @@ interface BeerResult {
   individualScores: IndividualScore[];
 }
 
+interface TasterInsight {
+  userName: string;
+  averageGiven: number;
+  stdDeviation: number;
+  favouriteBeer: { name: string; score: number } | null;
+  leastFavouriteBeer: { name: string; score: number } | null;
+  agreedWithWinner: boolean;
+  archetype: string;
+  avgCategories: { aroma: number; appearance: number; taste: number; overall: number };
+  beersRated: number;
+}
+
+interface Superlatives {
+  mostConsistent: { userName: string; value: number };
+  wildcard: { userName: string; value: number };
+  generous: { userName: string; value: number };
+  harsh: { userName: string; value: number };
+  agreedWithWinnerCount: number;
+  totalTasters: number;
+}
+
 interface ShowdownData {
   session: { name: string };
   participantsCount: number;
   participants: string[];
   results: BeerResult[];
+  tasterInsights: TasterInsight[];
+  superlatives: Superlatives | null;
 }
 
 // Reveal phases
@@ -48,6 +71,23 @@ function shuffleWithSeed(arr: BeerResult[], seed: number): BeerResult[] {
   return shuffled;
 }
 
+// Archetype emoji mapping
+function getArchetypeEmoji(archetype: string): string {
+  const map: Record<string, string> = {
+    'The Diplomat': '🤝',
+    'The Perfectionist': '🎯',
+    'The Contrarian': '🤪',
+    'The Cheerleader': '📣',
+    'The Critic': '🧐',
+    'The Nose': '👃',
+    'The Aesthete': '🎨',
+    'The Sommelier': '🍷',
+    'The Vibes Guru': '✨',
+    'The Taster': '🍺',
+  };
+  return map[archetype] || '🍺';
+}
+
 export default function ShowdownPage() {
   const params = useParams();
   const sessionId = String(params.sessionId).toUpperCase();
@@ -56,6 +96,7 @@ export default function ShowdownPage() {
   const [refreshing, setRefreshing] = useState(false);
   const [confettiPieces, setConfettiPieces] = useState<Array<{ left: number; color: string; delay: number; duration: number; size: number; shape: string }>>([]);
   const [expandedBeer, setExpandedBeer] = useState<number | null>(null);
+  const [expandedTaster, setExpandedTaster] = useState<string | null>(null);
 
   const fetchResults = useCallback(async () => {
     setRefreshing(true);
@@ -355,6 +396,183 @@ export default function ShowdownPage() {
     );
   };
 
+  // ===== TASTER INSIGHTS SECTION =====
+  const renderTasterInsights = () => {
+    if (!data.tasterInsights || data.tasterInsights.length === 0 || phase !== 'done') return null;
+
+    const { superlatives, tasterInsights } = data;
+
+    return (
+      <div className="animate-fade-in" style={{ marginTop: '48px' }}>
+        <h2 className="title-display" style={{ 
+          textAlign: 'center', fontSize: 'clamp(1.8rem, 5vw, 2.5rem)', marginBottom: '8px' 
+        }}>
+          Taster Insights
+        </h2>
+        <p style={{ textAlign: 'center', color: 'var(--text-secondary)', marginBottom: '28px', fontSize: '1rem' }}>
+          How did everyone do? 🧐
+        </p>
+
+        {/* ===== SUPERLATIVES ===== */}
+        {superlatives && (
+          <div className="insights-superlatives">
+            <div className="superlative-card" style={{ '--accent': 'var(--neon-green)' } as React.CSSProperties}>
+              <div className="superlative-emoji">🎯</div>
+              <div className="superlative-title">Most Consistent</div>
+              <div className="superlative-name">{superlatives.mostConsistent.userName}</div>
+              <div className="superlative-detail">σ = {superlatives.mostConsistent.value}</div>
+            </div>
+            <div className="superlative-card" style={{ '--accent': 'var(--neon-pink)' } as React.CSSProperties}>
+              <div className="superlative-emoji">🎲</div>
+              <div className="superlative-title">Wildcard</div>
+              <div className="superlative-name">{superlatives.wildcard.userName}</div>
+              <div className="superlative-detail">σ = {superlatives.wildcard.value}</div>
+            </div>
+            <div className="superlative-card" style={{ '--accent': 'var(--amber-light)' } as React.CSSProperties}>
+              <div className="superlative-emoji">📣</div>
+              <div className="superlative-title">Most Generous</div>
+              <div className="superlative-name">{superlatives.generous.userName}</div>
+              <div className="superlative-detail">avg {superlatives.generous.value}/20</div>
+            </div>
+            <div className="superlative-card" style={{ '--accent': 'var(--neon-blue)' } as React.CSSProperties}>
+              <div className="superlative-emoji">🧐</div>
+              <div className="superlative-title">Harshest Critic</div>
+              <div className="superlative-name">{superlatives.harsh.userName}</div>
+              <div className="superlative-detail">avg {superlatives.harsh.value}/20</div>
+            </div>
+          </div>
+        )}
+
+        {/* Winner agreement stat */}
+        {superlatives && (
+          <div style={{
+            textAlign: 'center', margin: '20px 0 28px', padding: '12px 20px',
+            background: 'rgba(74, 222, 128, 0.08)', borderRadius: '16px',
+            border: '1px solid rgba(74, 222, 128, 0.15)',
+          }}>
+            <span style={{ color: 'var(--neon-green)', fontFamily: 'var(--font-marker)', fontSize: '1.1rem' }}>
+              {superlatives.agreedWithWinnerCount}/{superlatives.totalTasters} tasters agreed on the champion! 
+              {superlatives.agreedWithWinnerCount === superlatives.totalTasters ? ' 🤯 Unanimous!' : 
+               superlatives.agreedWithWinnerCount === 0 ? ' 😱 Nobody saw it coming!' : ' 🍻'}
+            </span>
+          </div>
+        )}
+
+        {/* ===== PER-TASTER CARDS ===== */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+          {tasterInsights.map((taster) => {
+            const isExpanded = expandedTaster === taster.userName;
+            return (
+              <div
+                key={taster.userName}
+                className="glass-panel taster-card"
+                onClick={() => setExpandedTaster(isExpanded ? null : taster.userName)}
+                style={{ cursor: 'pointer', padding: '18px 22px' }}
+              >
+                {/* Header row */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                  <div className="taster-archetype-badge">
+                    <span style={{ fontSize: '1.5rem' }}>{getArchetypeEmoji(taster.archetype)}</span>
+                  </div>
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px', flexWrap: 'wrap' }}>
+                      <h3 style={{ fontFamily: 'var(--font-display)', fontSize: '1.25rem', letterSpacing: '1px' }}>
+                        {taster.userName}
+                      </h3>
+                      <span style={{ 
+                        fontSize: '0.8rem', color: 'var(--neon-pink)', fontFamily: 'var(--font-marker)',
+                        opacity: 0.8,
+                      }}>
+                        {taster.archetype}
+                      </span>
+                    </div>
+                    <div style={{ 
+                      display: 'flex', gap: '12px', fontSize: '0.8rem', color: 'var(--text-secondary)', 
+                      marginTop: '4px', flexWrap: 'wrap',
+                    }}>
+                      <span>avg {taster.averageGiven}/20</span>
+                      <span>σ {taster.stdDeviation}</span>
+                      {taster.agreedWithWinner ? (
+                        <span style={{ color: 'var(--neon-green)' }}>✓ Agreed with winner</span>
+                      ) : (
+                        <span style={{ color: 'rgba(254,243,199,0.3)' }}>✗ Picked different</span>
+                      )}
+                    </div>
+                  </div>
+                  <div style={{ 
+                    fontSize: '0.8rem', color: 'var(--text-secondary)', flexShrink: 0,
+                  }}>
+                    {isExpanded ? '▲' : '▼'}
+                  </div>
+                </div>
+
+                {/* Expanded details */}
+                {isExpanded && (
+                  <div style={{ marginTop: '16px', animation: 'fadeInUp 0.3s ease' }}>
+                    {/* Favourite & Least Favourite */}
+                    <div style={{ 
+                      display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '14px',
+                    }}>
+                      {taster.favouriteBeer && (
+                        <div style={{ 
+                          padding: '12px', background: 'rgba(74, 222, 128, 0.08)', 
+                          borderRadius: '12px', border: '1px solid rgba(74, 222, 128, 0.15)',
+                        }}>
+                          <div style={{ fontSize: '0.7rem', color: 'var(--neon-green)', marginBottom: '4px', fontFamily: 'var(--font-marker)' }}>
+                            ❤️ Favourite
+                          </div>
+                          <div style={{ fontSize: '0.95rem', fontWeight: 700 }}>{taster.favouriteBeer.name}</div>
+                          <div style={{ fontSize: '0.8rem', color: 'var(--amber-light)', fontFamily: 'var(--font-display)' }}>
+                            {taster.favouriteBeer.score}/20
+                          </div>
+                        </div>
+                      )}
+                      {taster.leastFavouriteBeer && (
+                        <div style={{ 
+                          padding: '12px', background: 'rgba(239, 68, 68, 0.06)', 
+                          borderRadius: '12px', border: '1px solid rgba(239, 68, 68, 0.12)',
+                        }}>
+                          <div style={{ fontSize: '0.7rem', color: '#fca5a5', marginBottom: '4px', fontFamily: 'var(--font-marker)' }}>
+                            😬 Least Fav
+                          </div>
+                          <div style={{ fontSize: '0.95rem', fontWeight: 700 }}>{taster.leastFavouriteBeer.name}</div>
+                          <div style={{ fontSize: '0.8rem', color: 'var(--amber-light)', fontFamily: 'var(--font-display)' }}>
+                            {taster.leastFavouriteBeer.score}/20
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Category breakdown */}
+                    <div style={{ 
+                      display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px',
+                      padding: '12px', background: 'rgba(0,0,0,0.25)', borderRadius: '12px',
+                    }}>
+                      {[
+                        { label: '👃', cat: 'Aroma', val: taster.avgCategories.aroma, color: 'var(--amber)' },
+                        { label: '👀', cat: 'Look', val: taster.avgCategories.appearance, color: 'var(--neon-blue)' },
+                        { label: '👅', cat: 'Taste', val: taster.avgCategories.taste, color: 'var(--neon-pink)' },
+                        { label: '🤙', cat: 'Vibes', val: taster.avgCategories.overall, color: 'var(--neon-green)' },
+                      ].map(c => (
+                        <div key={c.cat} style={{ textAlign: 'center' }}>
+                          <div style={{ fontSize: '0.65rem', color: 'var(--text-secondary)', marginBottom: '3px' }}>
+                            {c.label} {c.cat}
+                          </div>
+                          {getCategoryBar(c.val, c.color)}
+                          <div style={{ fontSize: '0.75rem', fontWeight: 700, marginTop: '3px' }}>{c.val}</div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+  };
+
   return (
     <>
       {/* Confetti */}
@@ -512,6 +730,9 @@ export default function ShowdownPage() {
               {shuffledResults.map((beer) => renderBeerCard(beer, -1, false, false))}
             </div>
           )}
+
+          {/* ===== TASTER INSIGHTS ===== */}
+          {renderTasterInsights()}
         </div>
 
         {/* ===== REVEAL BUTTON ===== */}

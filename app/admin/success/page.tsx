@@ -2,9 +2,9 @@
 
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 
-export default function AdminSuccessPage() {
+function SuccessContent() {
   const searchParams = useSearchParams();
   const code = searchParams.get('code');
   const [copied, setCopied] = useState(false);
@@ -17,8 +17,7 @@ export default function AdminSuccessPage() {
     }
   };
 
-  // Confetti effect
-  const [confetti, setConfetti] = useState<Array<{ left: number; color: string; delay: number; duration: number }>>([]);
+  const [confetti, setConfetti] = useState<Array<{ left: number; color: string; delay: number; duration: number; borderRadius: string; width: string; height: string }>>([]);
   
   useEffect(() => {
     const pieces = Array.from({ length: 50 }).map(() => ({
@@ -26,6 +25,9 @@ export default function AdminSuccessPage() {
       color: ['#fbbf24', '#f472b6', '#38bdf8', '#4ade80', '#f59e0b', '#a78bfa'][Math.floor(Math.random() * 6)],
       delay: Math.random() * 3,
       duration: 2 + Math.random() * 3,
+      borderRadius: Math.random() > 0.5 ? '50%' : '2px',
+      width: `${6 + Math.random() * 8}px`,
+      height: `${6 + Math.random() * 8}px`,
     }));
     setConfetti(pieces);
   }, []);
@@ -42,9 +44,9 @@ export default function AdminSuccessPage() {
             backgroundColor: piece.color,
             animationDelay: `${piece.delay}s`,
             animationDuration: `${piece.duration}s`,
-            borderRadius: Math.random() > 0.5 ? '50%' : '2px',
-            width: `${6 + Math.random() * 8}px`,
-            height: `${6 + Math.random() * 8}px`,
+            borderRadius: piece.borderRadius,
+            width: piece.width,
+            height: piece.height,
           }}
         />
       ))}
@@ -96,5 +98,17 @@ export default function AdminSuccessPage() {
         </div>
       </main>
     </>
+  );
+}
+
+export default function AdminSuccessPage() {
+  return (
+    <Suspense fallback={
+      <main className="container" style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh' }}>
+        <h2 className="title-marker" style={{ color: 'var(--amber)' }}>Loading...</h2>
+      </main>
+    }>
+      <SuccessContent />
+    </Suspense>
   );
 }

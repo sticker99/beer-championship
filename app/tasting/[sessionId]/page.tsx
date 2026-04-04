@@ -75,9 +75,11 @@ export default function TastingPage() {
   }, [sessionId]);
 
   const handleRatingChange = (category: string, value: number) => {
+    const defaults = { aroma: 3, appearance: 3, taste: 3, overall: 3 };
     setRatings(prev => ({
       ...prev,
       [currentBeerIndex]: {
+        ...defaults,
         ...prev[currentBeerIndex],
         [category]: value
       }

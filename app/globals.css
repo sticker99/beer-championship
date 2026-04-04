@@ -568,4 +568,96 @@ input[type="range"]::-moz-range-thumb {
   .btn-primary {
     font-size: 1.05rem;
   }
+
+  .insights-superlatives {
+    grid-template-columns: 1fr 1fr !important;
+  }
 }
+
+/* ===== TASTER INSIGHTS ===== */
+
+.insights-superlatives {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.superlative-card {
+  background: rgba(0, 0, 0, 0.35);
+  border-radius: 16px;
+  padding: 18px 14px;
+  text-align: center;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.superlative-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: var(--accent, var(--amber));
+  border-radius: 16px 16px 0 0;
+}
+
+.superlative-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+}
+
+.superlative-emoji {
+  font-size: 2rem;
+  margin-bottom: 8px;
+}
+
+.superlative-title {
+  font-size: 0.7rem;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 6px;
+  font-family: var(--font-marker);
+}
+
+.superlative-name {
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  letter-spacing: 1px;
+  color: var(--foam);
+  margin-bottom: 4px;
+}
+
+.superlative-detail {
+  font-size: 0.75rem;
+  color: var(--accent, var(--amber-light));
+  font-family: var(--font-body);
+  opacity: 0.8;
+}
+
+/* Taster profile card */
+.taster-card {
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+.taster-card:hover {
+  border-color: rgba(245, 158, 11, 0.35);
+  box-shadow: 0 0 30px rgba(245, 158, 11, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+}
+
+.taster-archetype-badge {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(244, 114, 182, 0.1));
+  border: 2px solid rgba(245, 158, 11, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
