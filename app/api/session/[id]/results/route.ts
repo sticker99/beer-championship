@@ -161,22 +161,88 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
           overall: Number((categoryTotals.overall / ratedCount).toFixed(1)),
         };
 
-        // Highest category preference
-        const categoryEntries = Object.entries(avgCategories) as [string, number][];
-        categoryEntries.sort((a, b) => b[1] - a[1]);
-        const topCategory = categoryEntries[0][0];
+        // Score each archetype across multiple independent signals.
+        // Every archetype accumulates points from continuous signals so that
+        // most users don't all fall into the same bucket.
 
-        // Archetype based on patterns
-        let archetype = 'The Taster';
-        if (stdDev <= 1.5 && avgGiven >= 14) archetype = 'The Diplomat';
-        else if (stdDev <= 1.5 && avgGiven < 14) archetype = 'The Perfectionist';
-        else if (stdDev > 3.5) archetype = 'The Contrarian';
-        else if (avgGiven >= 16) archetype = 'The Cheerleader';
-        else if (avgGiven <= 10) archetype = 'The Critic';
-        else if (topCategory === 'aroma') archetype = 'The Nose';
-        else if (topCategory === 'appearance') archetype = 'The Aesthete';
-        else if (topCategory === 'taste') archetype = 'The Sommelier';
-        else if (topCategory === 'overall') archetype = 'The Vibes Guru';
+        // Helper: normalise a value into [0, 1] given expected range
+        const norm = (v: number, lo: number, hi: number) => Math.max(0, Math.min(1, (v - lo) / (hi - lo)));
+
+        // Category spread: how much did they favour one category over others?
+        const catVals = [avgCategories.aroma, avgCategories.appearance, avgCategories.taste, avgCategories.overall];
+        const catMax = Math.max(...catVals);
+        const catMin = Math.min(...catVals);
+        const catSpread = catMax - catMin; // 0 = uniform, ~2 = strong preference
+
+        // Per-category z-score relative to this person's own mean
+        const catMean = catVals.reduce((a, b) => a + b, 0) / 4;
+        const aromaZ  = avgCategories.aroma       - catMean;
+        const lookZ   = avgCategories.appearance  - catMean;
+        const tasteZ  = avgCategories.taste       - catMean;
+        const vibesZ  = avgCategories.overall     - catMean;
+
+        // Score spread: gap between their best and worst beer rating
+        const scoreSpread = allScores.length > 1
+          ? Math.max(...allScores) - Math.min(...allScores)
+          : 0;
+
+        const archetypeScores: Record<string, number> = {
+          // Consistent + generous → Diplomat
+          'The Diplomat':
+            norm(avgGiven, 12, 20) * 3 +
+            (1 - norm(stdDev, 0, 4)) * 3 +
+            (agreedWithWinner ? 1 : 0),
+
+          // Consistent + tough → Perfectionist
+          'The Perfectionist':
+            (1 - norm(avgGiven, 0, 20)) * 3 +
+            (1 - norm(stdDev, 0, 4)) * 3 +
+            (1 - norm(scoreSpread, 0, 15)),
+
+          // High variance, goes against the grain → Contrarian
+          'The Contrarian':
+            norm(stdDev, 2, 6) * 4 +
+            norm(scoreSpread, 4, 18) * 2 +
+            (!agreedWithWinner ? 2 : 0),
+
+          // Very high scores across the board → Cheerleader
+          'The Cheerleader':
+            norm(avgGiven, 14, 20) * 5 +
+            (agreedWithWinner ? 1 : 0),
+
+          // Very low scores + some consistency → Critic
+          'The Critic':
+            (1 - norm(avgGiven, 0, 16)) * 4 +
+            (1 - norm(stdDev, 0, 5)) * 2,
+
+          // Aroma distinctly highest → The Nose
+          'The Nose':
+            norm(aromaZ, 0, 2) * 4 +
+            norm(catSpread, 0.3, 2) * 2,
+
+          // Appearance distinctly highest → Aesthete
+          'The Aesthete':
+            norm(lookZ, 0, 2) * 4 +
+            norm(catSpread, 0.3, 2) * 2,
+
+          // Taste clearly dominant (raised floor to avoid it being the default) → Sommelier
+          'The Sommelier':
+            norm(tasteZ, 0.3, 2) * 4 +
+            norm(catSpread, 0.5, 2) * 2,
+
+          // Vibes/overall highest → Vibes Guru
+          'The Vibes Guru':
+            norm(vibesZ, 0, 2) * 4 +
+            norm(catSpread, 0.3, 2) * 2,
+
+          // Middle of the road on everything → Taster
+          'The Taster':
+            (1 - norm(Math.abs(avgGiven - 13), 0, 7)) * 2 +
+            (1 - norm(stdDev, 0, 5)) * 1,
+        };
+
+        const archetype = Object.entries(archetypeScores)
+          .sort((a, b) => b[1] - a[1])[0][0];
 
         return {
           userName,
