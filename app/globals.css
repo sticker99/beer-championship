@@ -590,9 +590,7 @@ input[type="range"]::-moz-range-thumb {
 }
 
 /* Add padding at the bottom of main content so sticky bar doesn't cover content */
-main.container {
-  padding-bottom: 120px;
-}
+/* Note: this is also set as an inline style (padding: '40px 20px 160px') on each page's main element */
 
 /* ===== INSIGHTS TOAST ===== */
 .insights-toast {
@@ -692,19 +690,30 @@ main.container {
 }
 
 .taster-card:hover {
-  border-color: rgba(245, 158, 11, 0.35);
-  box-shadow: 0 0 30px rgba(245, 158, 11, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  border-color: rgba(245, 158, 11, 0.3);
+  box-shadow: 0 0 30px rgba(245, 158, 11, 0.07), inset 0 1px 0 rgba(255, 255, 255, 0.05);
 }
 
 .taster-archetype-badge {
-  width: 48px;
-  height: 48px;
+  width: 52px;
+  height: 52px;
   border-radius: 50%;
-  background: linear-gradient(135deg, rgba(245, 158, 11, 0.15), rgba(244, 114, 182, 0.1));
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.12), rgba(244, 114, 182, 0.08));
   border: 2px solid rgba(245, 158, 11, 0.2);
   display: flex;
   align-items: center;
   justify-content: center;
   flex-shrink: 0;
+  transition: border-color 0.3s ease;
+}
+
+.taster-stat-pill {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px 14px;
+  background: rgba(0, 0, 0, 0.25);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
 }
 

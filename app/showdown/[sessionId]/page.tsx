@@ -71,21 +71,67 @@ function shuffleWithSeed(arr: BeerResult[], seed: number): BeerResult[] {
   return shuffled;
 }
 
-// Archetype emoji mapping
-function getArchetypeEmoji(archetype: string): string {
-  const map: Record<string, string> = {
-    'The Diplomat': '🤝',
-    'The Perfectionist': '🎯',
-    'The Contrarian': '🤪',
-    'The Cheerleader': '📣',
-    'The Critic': '🧐',
-    'The Nose': '👃',
-    'The Aesthete': '🎨',
-    'The Sommelier': '🍷',
-    'The Vibes Guru': '✨',
-    'The Taster': '🍺',
-  };
-  return map[archetype] || '🍺';
+interface ArchetypeInfo {
+  emoji: string;
+  color: string;
+  story: string;
+}
+
+const ARCHETYPE_INFO: Record<string, ArchetypeInfo> = {
+  'The Diplomat': {
+    emoji: '🤝',
+    color: 'var(--neon-green)',
+    story: 'Refuses to start drama at the tasting table. Gives every beer a polite minimum and genuinely believes they all have something special. Probably brought a cheese board to maintain peace.',
+  },
+  'The Perfectionist': {
+    emoji: '🎯',
+    color: 'var(--neon-blue)',
+    story: 'Has a spreadsheet at home tracking every beer they\'ve ever tried. Will dock points for a slightly murky head. Once returned a perfectly good pint because "the carbonation was off".',
+  },
+  'The Contrarian': {
+    emoji: '🤪',
+    color: 'var(--neon-pink)',
+    story: 'If the group loves it, they\'re suspicious. Their favourite beer was a limited edition sour that tasted like wet socks to everyone else. They called it "complex with a challenging finish".',
+  },
+  'The Cheerleader': {
+    emoji: '📣',
+    color: 'var(--amber-light)',
+    story: 'Enthusiastically gave a 4.5 to the first beer before even tasting it. Every sip is met with "Ooh, that\'s actually really good!" Probably also rates their Uber driver 5 stars before getting in.',
+  },
+  'The Critic': {
+    emoji: '🧐',
+    color: 'var(--neon-blue)',
+    story: 'Watched three YouTube videos about craft beer before arriving. Uses words like "astringent" and "diacetyl" in casual conversation. Once described a beer as "competent but uninspiring" at a birthday party.',
+  },
+  'The Nose': {
+    emoji: '👃',
+    color: 'var(--amber)',
+    story: 'Will stick their entire face into the glass before taking a sip. Has strong opinions about dry-hopping schedules. Once cancelled plans because their neighbour was mowing the lawn and they couldn\'t "clear their palate".',
+  },
+  'The Aesthete': {
+    emoji: '🎨',
+    color: 'var(--neon-pink)',
+    story: 'Judged a beer undrinkable because it wasn\'t the right shade of golden. Has been known to hold the glass up to the light for 30+ seconds. Their camera roll is 60% beer photos, artfully arranged with moody lighting.',
+  },
+  'The Sommelier': {
+    emoji: '🍷',
+    color: 'var(--neon-green)',
+    story: 'Takes tiny sips and actually swirls the beer. Has used the phrase "I\'m getting notes of" without irony. Owns a book called The Flavour Bible and has read it. Twice.',
+  },
+  'The Vibes Guru': {
+    emoji: '✨',
+    color: 'var(--amber-light)',
+    story: 'Doesn\'t care about technique — they\'re rating the experience, man. Their scores correlate directly with how much fun they\'re having. Once gave a mediocre beer a 5 because the song on the radio was a certified banger.',
+  },
+  'The Taster': {
+    emoji: '🍺',
+    color: 'var(--text-secondary)',
+    story: 'Showed up, drank beer, gave scores. Respects the process. Didn\'t overthink it. Honestly, the most relatable person in the room and possibly the most reliable judge of all.',
+  },
+};
+
+function getArchetypeInfo(archetype: string): ArchetypeInfo {
+  return ARCHETYPE_INFO[archetype] || ARCHETYPE_INFO['The Taster'];
 }
 
 export default function ShowdownPage() {
@@ -483,94 +529,139 @@ export default function ShowdownPage() {
         )}
 
         {/* ===== PER-TASTER CARDS ===== */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
           {tasterInsights.map((taster) => {
+            const info = getArchetypeInfo(taster.archetype);
             const isExpanded = expandedTaster === taster.userName;
             return (
               <div
                 key={taster.userName}
                 className="glass-panel taster-card"
-                onClick={() => setExpandedTaster(isExpanded ? null : taster.userName)}
-                style={{ cursor: 'pointer', padding: '18px 22px' }}
+                style={{
+                  padding: '0',
+                  overflow: 'hidden',
+                  border: `1px solid rgba(245, 158, 11, 0.15)`,
+                }}
               >
-                {/* Header row */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-                  <div className="taster-archetype-badge">
-                    <span style={{ fontSize: '1.5rem' }}>{getArchetypeEmoji(taster.archetype)}</span>
-                  </div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px', flexWrap: 'wrap' }}>
-                      <h3 style={{ fontFamily: 'var(--font-display)', fontSize: '1.25rem', letterSpacing: '1px' }}>
+                {/* Archetype colour accent bar */}
+                <div style={{
+                  height: '4px',
+                  background: info.color,
+                  opacity: 0.6,
+                }} />
+
+                <div style={{ padding: '20px 22px' }}>
+                  {/* Header: emoji badge + name + archetype title */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginBottom: '14px' }}>
+                    <div className="taster-archetype-badge" style={{ borderColor: info.color }}>
+                      <span style={{ fontSize: '1.6rem' }}>{info.emoji}</span>
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <h3 style={{
+                        fontFamily: 'var(--font-display)', fontSize: '1.3rem',
+                        letterSpacing: '1px', marginBottom: '2px',
+                      }}>
                         {taster.userName}
                       </h3>
-                      <span style={{ 
-                        fontSize: '0.8rem', color: 'var(--neon-pink)', fontFamily: 'var(--font-marker)',
-                        opacity: 0.8,
+                      <span style={{
+                        fontSize: '0.85rem',
+                        fontFamily: 'var(--font-marker)',
+                        color: info.color,
                       }}>
                         {taster.archetype}
                       </span>
                     </div>
-                    <div style={{ 
-                      display: 'flex', gap: '12px', fontSize: '0.8rem', color: 'var(--text-secondary)', 
-                      marginTop: '4px', flexWrap: 'wrap',
-                    }}>
-                      <span>avg {taster.averageGiven}/20</span>
-                      <span>σ {taster.stdDeviation}</span>
-                      {taster.agreedWithWinner ? (
-                        <span style={{ color: 'var(--neon-green)' }}>✓ Agreed with winner</span>
-                      ) : (
-                        <span style={{ color: 'rgba(254,243,199,0.3)' }}>✗ Picked different</span>
-                      )}
-                    </div>
+                    {taster.agreedWithWinner ? (
+                      <div style={{
+                        fontSize: '0.75rem', color: 'var(--neon-green)',
+                        background: 'rgba(74, 222, 128, 0.1)', border: '1px solid rgba(74, 222, 128, 0.2)',
+                        borderRadius: '999px', padding: '4px 10px', flexShrink: 0,
+                      }}>✓ Called it!</div>
+                    ) : (
+                      <div style={{
+                        fontSize: '0.75rem', color: 'rgba(254,243,199,0.3)',
+                        background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)',
+                        borderRadius: '999px', padding: '4px 10px', flexShrink: 0,
+                      }}>✗ Rebel</div>
+                    )}
                   </div>
-                  <div style={{ 
-                    fontSize: '0.8rem', color: 'var(--text-secondary)', flexShrink: 0,
+
+                  {/* Always-visible backstory */}
+                  <p style={{
+                    fontSize: '0.9rem',
+                    lineHeight: 1.6,
+                    color: 'rgba(254, 243, 199, 0.65)',
+                    fontStyle: 'italic',
+                    padding: '12px 14px',
+                    background: 'rgba(0, 0, 0, 0.2)',
+                    borderRadius: '12px',
+                    borderLeft: `3px solid ${info.color}`,
+                    marginBottom: '14px',
                   }}>
-                    {isExpanded ? '▲' : '▼'}
-                  </div>
-                </div>
+                    &ldquo;{info.story}&rdquo;
+                  </p>
 
-                {/* Expanded details */}
-                {isExpanded && (
-                  <div style={{ marginTop: '16px', animation: 'fadeInUp 0.3s ease' }}>
-                    {/* Favourite & Least Favourite */}
-                    <div style={{ 
-                      display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '14px',
-                    }}>
-                      {taster.favouriteBeer && (
-                        <div style={{ 
-                          padding: '12px', background: 'rgba(74, 222, 128, 0.08)', 
-                          borderRadius: '12px', border: '1px solid rgba(74, 222, 128, 0.15)',
-                        }}>
-                          <div style={{ fontSize: '0.7rem', color: 'var(--neon-green)', marginBottom: '4px', fontFamily: 'var(--font-marker)' }}>
-                            ❤️ Favourite
-                          </div>
-                          <div style={{ fontSize: '0.95rem', fontWeight: 700 }}>{taster.favouriteBeer.name}</div>
-                          <div style={{ fontSize: '0.8rem', color: 'var(--amber-light)', fontFamily: 'var(--font-display)' }}>
-                            {taster.favouriteBeer.score}/20
-                          </div>
-                        </div>
-                      )}
-                      {taster.leastFavouriteBeer && (
-                        <div style={{ 
-                          padding: '12px', background: 'rgba(239, 68, 68, 0.06)', 
-                          borderRadius: '12px', border: '1px solid rgba(239, 68, 68, 0.12)',
-                        }}>
-                          <div style={{ fontSize: '0.7rem', color: '#fca5a5', marginBottom: '4px', fontFamily: 'var(--font-marker)' }}>
-                            😬 Least Fav
-                          </div>
-                          <div style={{ fontSize: '0.95rem', fontWeight: 700 }}>{taster.leastFavouriteBeer.name}</div>
-                          <div style={{ fontSize: '0.8rem', color: 'var(--amber-light)', fontFamily: 'var(--font-display)' }}>
-                            {taster.leastFavouriteBeer.score}/20
-                          </div>
-                        </div>
-                      )}
+                  {/* Quick stats row */}
+                  <div style={{
+                    display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '14px',
+                  }}>
+                    <div className="taster-stat-pill">
+                      <span style={{ color: 'var(--text-secondary)', fontSize: '0.7rem' }}>AVG SCORE</span>
+                      <span style={{ fontFamily: 'var(--font-display)', color: 'var(--amber-light)', fontSize: '1rem' }}>{taster.averageGiven}/20</span>
                     </div>
+                    <div className="taster-stat-pill">
+                      <span style={{ color: 'var(--text-secondary)', fontSize: '0.7rem' }}>CONSISTENCY</span>
+                      <span style={{ fontFamily: 'var(--font-display)', color: info.color, fontSize: '1rem' }}>σ {taster.stdDeviation}</span>
+                    </div>
+                  </div>
 
-                    {/* Category breakdown */}
-                    <div style={{ 
+                  {/* Fav / Least Fav */}
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '10px' }}>
+                    {taster.favouriteBeer && (
+                      <div style={{
+                        padding: '10px 12px',
+                        background: 'rgba(74, 222, 128, 0.07)',
+                        borderRadius: '12px',
+                        border: '1px solid rgba(74, 222, 128, 0.12)',
+                      }}>
+                        <div style={{ fontSize: '0.65rem', color: 'var(--neon-green)', marginBottom: '3px', fontFamily: 'var(--font-marker)' }}>❤️ Loved</div>
+                        <div style={{ fontSize: '0.9rem', fontWeight: 700, marginBottom: '2px' }}>{taster.favouriteBeer.name}</div>
+                        <div style={{ fontSize: '0.75rem', color: 'var(--amber-light)', fontFamily: 'var(--font-display)' }}>{taster.favouriteBeer.score}/20</div>
+                      </div>
+                    )}
+                    {taster.leastFavouriteBeer && (
+                      <div style={{
+                        padding: '10px 12px',
+                        background: 'rgba(239, 68, 68, 0.06)',
+                        borderRadius: '12px',
+                        border: '1px solid rgba(239, 68, 68, 0.1)',
+                      }}>
+                        <div style={{ fontSize: '0.65rem', color: '#fca5a5', marginBottom: '3px', fontFamily: 'var(--font-marker)' }}>😬 Not a fan</div>
+                        <div style={{ fontSize: '0.9rem', fontWeight: 700, marginBottom: '2px' }}>{taster.leastFavouriteBeer.name}</div>
+                        <div style={{ fontSize: '0.75rem', color: 'var(--amber-light)', fontFamily: 'var(--font-display)' }}>{taster.leastFavouriteBeer.score}/20</div>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Category breakdown toggle */}
+                  <button
+                    onClick={() => setExpandedTaster(isExpanded ? null : taster.userName)}
+                    style={{
+                      background: 'none', border: 'none', width: '100%',
+                      color: 'var(--text-secondary)', fontSize: '0.8rem',
+                      cursor: 'pointer', padding: '6px 0 0',
+                      textAlign: 'center',
+                    }}
+                  >
+                    {isExpanded ? '▲ Hide category breakdown' : '▼ Show category breakdown'}
+                  </button>
+
+                  {isExpanded && (
+                    <div style={{
+                      marginTop: '10px',
                       display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '8px',
                       padding: '12px', background: 'rgba(0,0,0,0.25)', borderRadius: '12px',
+                      animation: 'fadeInUp 0.25s ease',
                     }}>
                       {[
                         { label: '👃', cat: 'Aroma', val: taster.avgCategories.aroma, color: 'var(--amber)' },
@@ -587,8 +678,8 @@ export default function ShowdownPage() {
                         </div>
                       ))}
                     </div>
-                  </div>
-                )}
+                  )}
+                </div>
               </div>
             );
           })}
@@ -693,7 +784,7 @@ export default function ShowdownPage() {
       )}
 
       {/* ===== MAIN PAGE ===== */}
-      <main className="container" style={{ padding: '40px 20px', minHeight: '100vh' }}>
+      <main className="container" style={{ padding: '40px 20px 160px', minHeight: '100vh' }}>
         {/* Header */}
         <div style={{ textAlign: 'center', marginBottom: '36px' }} className="animate-fade-in">
           <div style={{ fontSize: '3rem', marginBottom: '10px' }}>🏆</div>
