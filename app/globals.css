@@ -574,6 +574,53 @@ input[type="range"]::-moz-range-thumb {
   }
 }
 
+/* ===== STICKY REVEAL BAR ===== */
+.sticky-reveal-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 500;
+  padding: 14px 20px 20px;
+  /* Fade from transparent to dark so content behind is still readable */
+  background: linear-gradient(to top, rgba(26, 14, 0, 0.98) 60%, transparent 100%);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border-top: 1px solid rgba(245, 158, 11, 0.08);
+}
+
+/* Add padding at the bottom of main content so sticky bar doesn't cover content */
+main.container {
+  padding-bottom: 120px;
+}
+
+/* ===== INSIGHTS TOAST ===== */
+.insights-toast {
+  position: fixed;
+  bottom: 100px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 600;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 20px;
+  background: rgba(30, 15, 0, 0.96);
+  border: 1px solid rgba(244, 114, 182, 0.35);
+  border-radius: 20px;
+  box-shadow: 0 8px 32px rgba(244, 114, 182, 0.15), 0 0 60px rgba(0, 0, 0, 0.4);
+  cursor: pointer;
+  white-space: nowrap;
+  color: var(--foam);
+  max-width: calc(100vw - 40px);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.insights-toast:hover {
+  transform: translateX(-50%) translateY(-2px);
+  box-shadow: 0 12px 40px rgba(244, 114, 182, 0.25), 0 0 60px rgba(0, 0, 0, 0.5);
+}
+
 /* ===== TASTER INSIGHTS ===== */
 
 .insights-superlatives {

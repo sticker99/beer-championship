@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback, useMemo } from 'react';
+import { useEffect, useState, useCallback, useMemo, useRef } from 'react';
 import { useParams } from 'next/navigation';
 
 interface IndividualScore {
@@ -97,6 +97,10 @@ export default function ShowdownPage() {
   const [confettiPieces, setConfettiPieces] = useState<Array<{ left: number; color: string; delay: number; duration: number; size: number; shape: string }>>([]);
   const [expandedBeer, setExpandedBeer] = useState<number | null>(null);
   const [expandedTaster, setExpandedTaster] = useState<string | null>(null);
+  const [showInsightsToast, setShowInsightsToast] = useState(false);
+
+  const podiumRef = useRef<HTMLDivElement>(null);
+  const insightsRef = useRef<HTMLDivElement>(null);
 
   const fetchResults = useCallback(async () => {
     setRefreshing(true);
@@ -114,6 +118,23 @@ export default function ShowdownPage() {
     if (!data) return [];
     return shuffleWithSeed(data.results, sessionId.charCodeAt(0) * 1000 + data.results.length);
   }, [data, sessionId]);
+
+  // Show insights toast when phase becomes 'done'
+  useEffect(() => {
+    if (phase === 'done' && data?.tasterInsights && data.tasterInsights.length > 0) {
+      // Small delay so the main content transition settles first
+      const t = setTimeout(() => {
+        setShowInsightsToast(true);
+        // Auto-scroll to insights section
+        setTimeout(() => {
+          insightsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 400);
+        // Hide toast after 5s
+        setTimeout(() => setShowInsightsToast(false), 5000);
+      }, 600);
+      return () => clearTimeout(t);
+    }
+  }, [phase, data?.tasterInsights]);
 
   const triggerConfetti = (count = 100) => {
     const pieces = Array.from({ length: count }).map(() => ({
@@ -147,8 +168,11 @@ export default function ShowdownPage() {
     return false;
   };
 
-  // Auto-sequence the podium reveal with timed delays
+  // Auto-scroll when podium sequence starts
   const startPodiumSequence = (startWith: 'bronze' | 'silver' | 'drumroll') => {
+    // Scroll to top so users see the podium cards appearing
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+
     const steps: Array<{ phase: RevealPhase; delay: number; confetti?: number }> = [];
 
     if (startWith === 'bronze') {
@@ -338,8 +362,8 @@ export default function ShowdownPage() {
                     marginTop: '8px', display: 'flex', flexDirection: 'column', gap: '6px',
                     animation: 'fadeInUp 0.3s ease',
                   }}>
-                    {beer.individualScores
-                      .sort((a, b) => b.total - a.total)
+                    {[...beer.individualScores]
+                      .sort((a, b) => b.total - a.total || a.userName.localeCompare(b.userName))
                       .map((score, i) => (
                       <div key={i} style={{ 
                         display: 'flex', alignItems: 'center', gap: '10px', padding: '8px 12px',
@@ -403,7 +427,7 @@ export default function ShowdownPage() {
     const { superlatives, tasterInsights } = data;
 
     return (
-      <div className="animate-fade-in" style={{ marginTop: '48px' }}>
+      <div ref={insightsRef} className="animate-fade-in" style={{ marginTop: '48px', scrollMarginTop: '24px' }}>
         <h2 className="title-display" style={{ 
           textAlign: 'center', fontSize: 'clamp(1.8rem, 5vw, 2.5rem)', marginBottom: '8px' 
         }}>
@@ -651,7 +675,7 @@ export default function ShowdownPage() {
             {/* Individual champion voters */}
             {podiumBeers[0].individualScores.length > 0 && (
               <div style={{ marginTop: '20px', display: 'flex', gap: '8px', justifyContent: 'center', flexWrap: 'wrap' }}>
-                {podiumBeers[0].individualScores.sort((a,b) => b.total - a.total).map((s, i) => (
+                {[...podiumBeers[0].individualScores].sort((a,b) => b.total - a.total || a.userName.localeCompare(b.userName)).map((s, i) => (
                   <div key={i} style={{ 
                     padding: '6px 14px', background: 'rgba(245, 158, 11, 0.15)', borderRadius: '999px',
                     fontSize: '0.85rem', border: '1px solid rgba(245, 158, 11, 0.2)',
@@ -685,7 +709,7 @@ export default function ShowdownPage() {
         <div style={{ maxWidth: '700px', margin: '0 auto' }}>
           {/* ===== TOP 3 PODIUM SECTION ===== */}
           {phase !== 'waiting' && (
-            <div style={{ marginBottom: '32px' }}>
+            <div ref={podiumRef} style={{ marginBottom: '32px', scrollMarginTop: '24px' }}>
               <h2 className="title-marker" style={{ textAlign: 'center', color: 'var(--amber-light)', fontSize: '1.4rem', marginBottom: '20px' }}>
                 🏆 The Podium
               </h2>
@@ -735,24 +759,53 @@ export default function ShowdownPage() {
           {renderTasterInsights()}
         </div>
 
-        {/* ===== REVEAL BUTTON ===== */}
+        {/* ===== STICKY REVEAL BUTTON ===== */}
         {(phase === 'waiting' || phase === 'the-pack' || phase === 'done') && (
-          <div style={{ textAlign: 'center', marginTop: '36px', marginBottom: '40px' }} className="animate-fade-in">
-            <button 
-              className="btn btn-primary animate-pulse" 
-              style={{ fontSize: '1.3rem', padding: '18px 40px' }}
-              onClick={handleNextPhase}
-            >
-              {getButtonLabel()}
-            </button>
+          <div className="sticky-reveal-bar animate-fade-in">
+            <div style={{ maxWidth: '700px', margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '16px' }}>
+              {phase === 'done' && data.tasterInsights?.length > 0 && (
+                <button
+                  className="btn btn-secondary"
+                  style={{ padding: '12px 20px', fontSize: '0.95rem', flexShrink: 0 }}
+                  onClick={() => insightsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+                >
+                  🧐 See Insights
+                </button>
+              )}
+              <button
+                className="btn btn-primary animate-pulse"
+                style={{ fontSize: '1.1rem', padding: '14px 32px' }}
+                onClick={handleNextPhase}
+              >
+                {getButtonLabel()}
+              </button>
+            </div>
             {phase === 'waiting' && (
-              <p style={{ marginTop: '10px', color: 'var(--text-secondary)', fontSize: '0.85rem' }}>
+              <p style={{ marginTop: '8px', color: 'var(--text-secondary)', fontSize: '0.8rem', textAlign: 'center' }}>
                 {results.length} beers • {data.participantsCount} tasters • Let the showdown begin!
               </p>
             )}
           </div>
         )}
       </main>
+
+      {/* ===== INSIGHTS TOAST ===== */}
+      {showInsightsToast && (
+        <div
+          className="insights-toast animate-fade-in"
+          onClick={() => {
+            setShowInsightsToast(false);
+            insightsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }}
+        >
+          <span style={{ fontSize: '1.3rem' }}>🧐</span>
+          <div>
+            <div style={{ fontWeight: 700, fontSize: '0.95rem' }}>Taster Insights unlocked!</div>
+            <div style={{ fontSize: '0.8rem', opacity: 0.7, marginTop: '2px' }}>Tap to jump to individual breakdowns ↓</div>
+          </div>
+          <span style={{ fontSize: '1.1rem', opacity: 0.5 }}>✕</span>
+        </div>
+      )}
     </>
   );
 }

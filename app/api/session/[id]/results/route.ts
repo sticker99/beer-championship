@@ -28,6 +28,16 @@ interface SessionData {
   status: string;
 }
 
+// Safely extract rating fields, defaulting missing values to 3 (the slider default)
+function safeRating(rating: Record<string, unknown>): Rating {
+  return {
+    aroma: typeof rating.aroma === 'number' ? rating.aroma : 3,
+    appearance: typeof rating.appearance === 'number' ? rating.appearance : 3,
+    taste: typeof rating.taste === 'number' ? rating.taste : 3,
+    overall: typeof rating.overall === 'number' ? rating.overall : 3,
+  };
+}
+
 export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const resolvedParams = await params;
@@ -57,8 +67,9 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
       
       allRatings.forEach((userRatingData) => {
         if (!userRatingData || !userRatingData.ratings) return;
-        const rating = userRatingData.ratings[index];
-        if (rating) {
+        const rawRating = userRatingData.ratings[index];
+        if (rawRating) {
+          const rating = safeRating(rawRating as unknown as Record<string, unknown>);
           const userTotal = rating.aroma + rating.appearance + rating.taste + rating.overall;
           totalScore += userTotal;
           categories.aroma += rating.aroma;
@@ -95,8 +106,8 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
       };
     });
     
-    // 5. Sort by Average Score Descending
-    aggregated.sort((a, b) => b.averageScore - a.averageScore);
+    // 5. Sort by Average Score Descending (with stable tiebreaker by name)
+    aggregated.sort((a, b) => b.averageScore - a.averageScore || a.name.localeCompare(b.name));
 
     // 6. Compute per-taster insights
     const tasterInsights = allRatings
@@ -109,8 +120,9 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
         let ratedCount = 0;
 
         beers.forEach((beer: BeerInput, index: number) => {
-          const rating = userRatingData.ratings[index];
-          if (rating) {
+          const rawRating = userRatingData.ratings[index];
+          if (rawRating) {
+            const rating = safeRating(rawRating as unknown as Record<string, unknown>);
             const total = rating.aroma + rating.appearance + rating.taste + rating.overall;
             beerTotals.push({ beerName: beer.name, beerIndex: index, total });
             allScores.push(total);
@@ -132,7 +144,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
         const stdDev = Number(Math.sqrt(variance).toFixed(2));
 
         // Favourite & least favourite
-        beerTotals.sort((a, b) => b.total - a.total);
+        beerTotals.sort((a, b) => b.total - a.total || a.beerName.localeCompare(b.beerName));
         const favouriteBeer = beerTotals[0];
         const leastFavouriteBeer = beerTotals[beerTotals.length - 1];
 
