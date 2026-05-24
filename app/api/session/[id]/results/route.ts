@@ -187,55 +187,78 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
           : 0;
 
         const archetypeScores: Record<string, number> = {
-          // Consistent + generous → Diplomat
+          // Tightened: needs avg ≥ 15 AND very low variance (σ < 2) → true peacekeepers only
           'The Diplomat':
-            norm(avgGiven, 12, 20) * 3 +
-            (1 - norm(stdDev, 0, 4)) * 3 +
+            norm(avgGiven, 15, 20) * 4 +
+            (1 - norm(stdDev, 0, 2)) * 4 +
             (agreedWithWinner ? 1 : 0),
 
-          // Consistent + tough → Perfectionist
+          // Tightened: needs avg ≤ 12 AND very low variance → genuine tough crowd only
           'The Perfectionist':
-            (1 - norm(avgGiven, 0, 20)) * 3 +
-            (1 - norm(stdDev, 0, 4)) * 3 +
-            (1 - norm(scoreSpread, 0, 15)),
+            (1 - norm(avgGiven, 0, 12)) * 4 +
+            (1 - norm(stdDev, 0, 2)) * 4 +
+            (1 - norm(scoreSpread, 0, 10)),
 
-          // High variance, goes against the grain → Contrarian
+          // High variance + contrarian pick → chaos agent
           'The Contrarian':
             norm(stdDev, 2, 6) * 4 +
             norm(scoreSpread, 4, 18) * 2 +
             (!agreedWithWinner ? 2 : 0),
 
-          // Very high scores across the board → Cheerleader
+          // Very high scores overall → life of the party
           'The Cheerleader':
             norm(avgGiven, 14, 20) * 5 +
             (agreedWithWinner ? 1 : 0),
 
-          // Very low scores + some consistency → Critic
+          // Very low scores → the floor manager of taste
           'The Critic':
             (1 - norm(avgGiven, 0, 16)) * 4 +
             (1 - norm(stdDev, 0, 5)) * 2,
 
-          // Aroma distinctly highest → The Nose
+          // Aroma distinctly highest relative to own mean
           'The Nose':
             norm(aromaZ, 0, 2) * 4 +
             norm(catSpread, 0.3, 2) * 2,
 
-          // Appearance distinctly highest → Aesthete
+          // Appearance distinctly highest
           'The Aesthete':
             norm(lookZ, 0, 2) * 4 +
             norm(catSpread, 0.3, 2) * 2,
 
-          // Taste clearly dominant (raised floor to avoid it being the default) → Sommelier
+          // Taste clearly dominant with meaningful category spread
           'The Sommelier':
             norm(tasteZ, 0.3, 2) * 4 +
             norm(catSpread, 0.5, 2) * 2,
 
-          // Vibes/overall highest → Vibes Guru
+          // Vibes/overall highest
           'The Vibes Guru':
             norm(vibesZ, 0, 2) * 4 +
             norm(catSpread, 0.3, 2) * 2,
 
-          // Middle of the road on everything → Taster
+          // Knows their beer, agreed with crowd consensus, reasonably consistent
+          'The Aficionado':
+            norm(avgGiven, 12, 17) * 2 +
+            (agreedWithWinner ? 3 : 0) +
+            (1 - norm(stdDev, 0, 4)) * 2,
+
+          // Big gap between their best and worst beer — very discerning, has opinions
+          'The Hawk':
+            norm(scoreSpread, 6, 18) * 5 +
+            (1 - norm(avgGiven, 12, 20)) * 2,
+
+          // Mid-high avg, vibes/overall distinctly high — social, atmosphere-led drinker
+          'The Bon Vivant':
+            norm(avgGiven, 12, 18) * 2 +
+            norm(vibesZ, 0.2, 2) * 4 +
+            norm(catSpread, 0.3, 2) * 2,
+
+          // Both aroma AND taste above their own mean — sensory driven holistically
+          'The Sensualist':
+            (aromaZ > 0 ? norm(aromaZ, 0, 2) * 3 : 0) +
+            (tasteZ > 0 ? norm(tasteZ, 0, 2) * 3 : 0) +
+            norm(catSpread, 0.3, 2) * 2,
+
+          // Truly balanced — not high, not low, not opinionated
           'The Taster':
             (1 - norm(Math.abs(avgGiven - 13), 0, 7)) * 2 +
             (1 - norm(stdDev, 0, 5)) * 1,

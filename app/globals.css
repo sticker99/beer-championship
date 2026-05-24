@@ -717,3 +717,44 @@ input[type="range"]::-moz-range-thumb {
   border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
+
+/* ===== BEER NAVIGATION DRAWER ===== */
+.drawer-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.65);
+  z-index: 800;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+.drawer-sheet {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 900;
+  background: linear-gradient(to top, #1a0e00 85%, rgba(26, 14, 0, 0.97));
+  border-radius: 24px 24px 0 0;
+  border-top: 1px solid rgba(245, 158, 11, 0.2);
+  padding: 8px 20px 40px;
+  max-height: 78vh;
+  overflow-y: auto;
+  animation: slideUpDrawer 0.3s cubic-bezier(0.32, 0.72, 0, 1);
+}
+
+/* Pull handle */
+.drawer-sheet::before {
+  content: '';
+  display: block;
+  width: 36px;
+  height: 4px;
+  background: rgba(245, 158, 11, 0.25);
+  border-radius: 999px;
+  margin: 12px auto 16px;
+}
+
+@keyframes slideUpDrawer {
+  from { transform: translateY(100%); }
+  to   { transform: translateY(0); }
+}

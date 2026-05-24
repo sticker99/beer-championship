@@ -128,6 +128,26 @@ const ARCHETYPE_INFO: Record<string, ArchetypeInfo> = {
     color: 'var(--text-secondary)',
     story: 'Showed up, drank beer, gave scores. Respects the process. Didn\'t overthink it. Honestly, the most relatable person in the room and possibly the most reliable judge of all.',
   },
+  'The Aficionado': {
+    emoji: '🏅',
+    color: 'var(--amber)',
+    story: 'Reads the tap list before sitting down and has Opinions about hop varieties. Quietly pleased when the group agreed with their pick. Will mention they knew from the first sip for the rest of the evening.',
+  },
+  'The Hawk': {
+    emoji: '🦅',
+    color: 'var(--neon-blue)',
+    story: 'Has absolutely zero interest in giving a middling score. Their rating range goes from this is a crime against hops to I would bathe in this. No nuance, no mercy, no regrets. Somehow always right.',
+  },
+  'The Bon Vivant': {
+    emoji: '🥂',
+    color: 'var(--neon-green)',
+    story: 'Could not explain what makes a beer technically good but knows exactly what makes an evening great. Scores the atmosphere as much as the beer. Solely responsible for extending this tasting by at least 45 minutes.',
+  },
+  'The Sensualist': {
+    emoji: '🌸',
+    color: 'var(--neon-pink)',
+    story: 'Closes their eyes for the first sip. Swirls. Sniffs. Thinks. Their palate works in layers — first the nose, then the body, then the finish. Does not understand how anyone can drink without paying full attention.',
+  }
 };
 
 function getArchetypeInfo(archetype: string): ArchetypeInfo {

@@ -225,7 +225,7 @@ export default function AdminPage() {
   );
 
   const addBeer = () => {
-    setBeers([...beers, { id: generateId(), name: '', brewery: '', type: '' }]);
+    setBeers([{ id: generateId(), name: '', brewery: '', type: '' }, ...beers]);
   };
 
   const updateBeer = (index: number, field: keyof Omit<BeerInput, 'id'>, value: string) => {
