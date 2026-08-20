@@ -759,85 +759,91 @@ export default function ShowdownPage() {
             );
           })}
         </div>
+      </div>
+    );
+  };
 
-        {/* ===== ARCHETYPE GLOSSARY ===== */}
-        {showGlossary && (
-          <div className="drawer-backdrop" onClick={() => setShowGlossary(false)} />
-        )}
-        {showGlossary && (
-          <div className="drawer-sheet">
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-              <h3 className="title-marker" style={{ fontSize: '1.1rem' }}>📖 Archetype Guide</h3>
-              <button
-                onClick={() => setShowGlossary(false)}
-                style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', fontSize: '1.4rem', cursor: 'pointer', padding: '4px 8px', lineHeight: 1 }}
-              >✕</button>
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-              {Object.entries(ARCHETYPE_INFO).map(([name, archInfo]) => (
-                <div key={name} className="glass-panel" style={{ padding: '14px 16px', borderLeft: `3px solid ${archInfo.color}` }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '6px' }}>
-                    <span style={{ fontSize: '1.4rem' }}>{archInfo.emoji}</span>
-                    <span style={{ fontFamily: 'var(--font-display)', fontSize: '1rem', letterSpacing: '1px', color: archInfo.color }}>{name}</span>
-                  </div>
-                  <p style={{ fontSize: '0.85rem', lineHeight: 1.5, color: 'rgba(254, 243, 199, 0.65)', fontStyle: 'italic' }}>
-                    &ldquo;{archInfo.story}&rdquo;
-                  </p>
-                </div>
-              ))}
-            </div>
+  // Rendered outside any transform-animated ancestor (e.g. .animate-fade-in),
+  // since a non-'none' transform on an ancestor makes it the containing block
+  // for position:fixed descendants — which broke both overlays' positioning
+  // and made them scroll away with the page instead of staying fixed.
+  const renderArchetypeGlossary = () => {
+    if (!showGlossary) return null;
+    return (
+      <>
+        <div className="drawer-backdrop" onClick={() => setShowGlossary(false)} />
+        <div className="drawer-sheet drawer-sheet-scroll">
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+            <h3 className="title-marker" style={{ fontSize: '1.1rem' }}>📖 Archetype Guide</h3>
+            <button
+              onClick={() => setShowGlossary(false)}
+              style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', fontSize: '1.4rem', cursor: 'pointer', padding: '4px 8px', lineHeight: 1 }}
+            >✕</button>
           </div>
-        )}
-
-        {/* ===== SHAREABLE RECAP CARD ===== */}
-        {recapTaster && (() => {
-          const taster = tasterInsights.find(t => t.userName === recapTaster);
-          if (!taster) return null;
-          const info = getArchetypeInfo(taster.archetype);
-          return (
-            <div className="champion-overlay" onClick={() => setRecapTaster(null)}>
-              <div style={{ position: 'relative', zIndex: 1, textAlign: 'center', maxWidth: '420px', padding: '20px' }}>
-                <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginBottom: '6px' }}>{data.session.name}</p>
-                <div style={{ fontSize: '4.5rem', marginBottom: '12px' }}>{info.emoji}</div>
-                <h2 className="title-display" style={{ fontSize: 'clamp(1.8rem, 6vw, 2.6rem)', marginBottom: '4px' }}>{taster.userName}</h2>
-                <p style={{ fontFamily: 'var(--font-marker)', fontSize: '1.2rem', color: info.color, marginBottom: '18px' }}>{taster.archetype}</p>
-                <p style={{
-                  fontSize: '0.95rem', lineHeight: 1.6, color: 'rgba(254, 243, 199, 0.75)', fontStyle: 'italic',
-                  padding: '14px 18px', background: 'rgba(0,0,0,0.25)', borderRadius: '14px',
-                  borderLeft: `3px solid ${info.color}`, marginBottom: '20px',
-                }}>
-                  &ldquo;{info.story}&rdquo;
-                </p>
-                <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', justifyContent: 'center', marginBottom: '16px' }}>
-                  <div className="taster-stat-pill">
-                    <span style={{ color: 'var(--text-secondary)', fontSize: '0.7rem' }}>AVG SCORE</span>
-                    <span style={{ fontFamily: 'var(--font-display)', color: 'var(--amber-light)', fontSize: '1rem' }}>{taster.averageGiven}/20</span>
-                  </div>
-                  {taster.favouriteBeer && (
-                    <div className="taster-stat-pill">
-                      <span style={{ color: 'var(--text-secondary)', fontSize: '0.7rem' }}>❤️ LOVED</span>
-                      <span style={{ fontFamily: 'var(--font-display)', color: 'var(--neon-green)', fontSize: '1rem' }}>{taster.favouriteBeer.name}</span>
-                    </div>
-                  )}
-                  {taster.leastFavouriteBeer && (
-                    <div className="taster-stat-pill">
-                      <span style={{ color: 'var(--text-secondary)', fontSize: '0.7rem' }}>😬 SKIPPED</span>
-                      <span style={{ fontFamily: 'var(--font-display)', color: '#fca5a5', fontSize: '1rem' }}>{taster.leastFavouriteBeer.name}</span>
-                    </div>
-                  )}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            {Object.entries(ARCHETYPE_INFO).map(([name, archInfo]) => (
+              <div key={name} className="glass-panel" style={{ padding: '14px 16px', borderLeft: `3px solid ${archInfo.color}` }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '6px' }}>
+                  <span style={{ fontSize: '1.4rem' }}>{archInfo.emoji}</span>
+                  <span style={{ fontFamily: 'var(--font-display)', fontSize: '1rem', letterSpacing: '1px', color: archInfo.color }}>{name}</span>
                 </div>
-                {taster.agreedWithWinner && (
-                  <div style={{
-                    display: 'inline-block', fontSize: '0.8rem', color: 'var(--neon-green)',
-                    background: 'rgba(74, 222, 128, 0.1)', border: '1px solid rgba(74, 222, 128, 0.2)',
-                    borderRadius: '999px', padding: '4px 12px', marginBottom: '14px',
-                  }}>✓ Called the winner</div>
-                )}
-                <p style={{ color: 'var(--text-secondary)', fontSize: '0.75rem', marginTop: '10px' }}>📸 Screenshot me and share!</p>
+                <p style={{ fontSize: '0.85rem', lineHeight: 1.5, color: 'rgba(254, 243, 199, 0.65)', fontStyle: 'italic' }}>
+                  &ldquo;{archInfo.story}&rdquo;
+                </p>
               </div>
+            ))}
+          </div>
+        </div>
+      </>
+    );
+  };
+
+  const renderRecapCard = () => {
+    if (!recapTaster || !data.tasterInsights) return null;
+    const taster = data.tasterInsights.find(t => t.userName === recapTaster);
+    if (!taster) return null;
+    const info = getArchetypeInfo(taster.archetype);
+    return (
+      <div className="champion-overlay" onClick={() => setRecapTaster(null)}>
+        <div style={{ position: 'relative', zIndex: 1, textAlign: 'center', maxWidth: '420px', padding: '20px' }}>
+          <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginBottom: '6px' }}>{data.session.name}</p>
+          <div style={{ fontSize: '4.5rem', marginBottom: '12px' }}>{info.emoji}</div>
+          <h2 className="title-display" style={{ fontSize: 'clamp(1.8rem, 6vw, 2.6rem)', marginBottom: '4px' }}>{taster.userName}</h2>
+          <p style={{ fontFamily: 'var(--font-marker)', fontSize: '1.2rem', color: info.color, marginBottom: '18px' }}>{taster.archetype}</p>
+          <p style={{
+            fontSize: '0.95rem', lineHeight: 1.6, color: 'rgba(254, 243, 199, 0.75)', fontStyle: 'italic',
+            padding: '14px 18px', background: 'rgba(0,0,0,0.25)', borderRadius: '14px',
+            borderLeft: `3px solid ${info.color}`, marginBottom: '20px',
+          }}>
+            &ldquo;{info.story}&rdquo;
+          </p>
+          <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', justifyContent: 'center', marginBottom: '16px' }}>
+            <div className="taster-stat-pill">
+              <span style={{ color: 'var(--text-secondary)', fontSize: '0.7rem' }}>AVG SCORE</span>
+              <span style={{ fontFamily: 'var(--font-display)', color: 'var(--amber-light)', fontSize: '1rem' }}>{taster.averageGiven}/20</span>
             </div>
-          );
-        })()}
+            {taster.favouriteBeer && (
+              <div className="taster-stat-pill">
+                <span style={{ color: 'var(--text-secondary)', fontSize: '0.7rem' }}>❤️ LOVED</span>
+                <span style={{ fontFamily: 'var(--font-display)', color: 'var(--neon-green)', fontSize: '1rem' }}>{taster.favouriteBeer.name}</span>
+              </div>
+            )}
+            {taster.leastFavouriteBeer && (
+              <div className="taster-stat-pill">
+                <span style={{ color: 'var(--text-secondary)', fontSize: '0.7rem' }}>😬 SKIPPED</span>
+                <span style={{ fontFamily: 'var(--font-display)', color: '#fca5a5', fontSize: '1rem' }}>{taster.leastFavouriteBeer.name}</span>
+              </div>
+            )}
+          </div>
+          {taster.agreedWithWinner && (
+            <div style={{
+              display: 'inline-block', fontSize: '0.8rem', color: 'var(--neon-green)',
+              background: 'rgba(74, 222, 128, 0.1)', border: '1px solid rgba(74, 222, 128, 0.2)',
+              borderRadius: '999px', padding: '4px 12px', marginBottom: '14px',
+            }}>✓ Called the winner</div>
+          )}
+          <p style={{ color: 'var(--text-secondary)', fontSize: '0.75rem', marginTop: '10px' }}>📸 Screenshot me and share!</p>
+        </div>
       </div>
     );
   };
@@ -852,6 +858,9 @@ export default function ShowdownPage() {
           width: `${piece.size}px`, height: `${piece.size}px`,
         }} />
       ))}
+
+      {renderArchetypeGlossary()}
+      {renderRecapCard()}
 
       {/* ===== PHASE OVERLAYS ===== */}
 
