@@ -23,6 +23,7 @@ interface BeerResult {
     taste: number;
     overall: number;
   } | null;
+  scoreStdDev: number | null;
   individualScores: IndividualScore[];
 }
 
@@ -47,6 +48,11 @@ interface Superlatives {
   totalTasters: number;
 }
 
+interface BeerSuperlatives {
+  mostDivisive: { name: string; value: number };
+  mostUnanimous: { name: string; value: number };
+}
+
 interface ShowdownData {
   session: { name: string };
   participantsCount: number;
@@ -54,6 +60,7 @@ interface ShowdownData {
   results: BeerResult[];
   tasterInsights: TasterInsight[];
   superlatives: Superlatives | null;
+  beerSuperlatives: BeerSuperlatives | null;
 }
 
 // Reveal phases
@@ -165,6 +172,8 @@ export default function ShowdownPage() {
   const [expandedBeer, setExpandedBeer] = useState<number | null>(null);
   const [expandedTaster, setExpandedTaster] = useState<string | null>(null);
   const [showInsightsToast, setShowInsightsToast] = useState(false);
+  const [showGlossary, setShowGlossary] = useState(false);
+  const [recapTaster, setRecapTaster] = useState<string | null>(null);
 
   const podiumRef = useRef<HTMLDivElement>(null);
   const insightsRef = useRef<HTMLDivElement>(null);
@@ -522,9 +531,19 @@ export default function ShowdownPage() {
         }}>
           Taster Insights
         </h2>
-        <p style={{ textAlign: 'center', color: 'var(--text-secondary)', marginBottom: '28px', fontSize: '1rem' }}>
+        <p style={{ textAlign: 'center', color: 'var(--text-secondary)', marginBottom: '16px', fontSize: '1rem' }}>
           How did everyone do? 🧐
         </p>
+
+        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '28px' }}>
+          <button
+            onClick={() => setShowGlossary(true)}
+            className="btn btn-secondary"
+            style={{ fontSize: '0.85rem', padding: '8px 16px' }}
+          >
+            📖 Archetype Guide
+          </button>
+        </div>
 
         {/* ===== SUPERLATIVES ===== */}
         {superlatives && (
@@ -686,18 +705,31 @@ export default function ShowdownPage() {
                     )}
                   </div>
 
-                  {/* Category breakdown toggle */}
-                  <button
-                    onClick={() => setExpandedTaster(isExpanded ? null : taster.userName)}
-                    style={{
-                      background: 'none', border: 'none', width: '100%',
-                      color: 'var(--text-secondary)', fontSize: '0.8rem',
-                      cursor: 'pointer', padding: '6px 0 0',
-                      textAlign: 'center',
-                    }}
-                  >
-                    {isExpanded ? '▲ Hide category breakdown' : '▼ Show category breakdown'}
-                  </button>
+                  {/* Category breakdown toggle + recap card */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '6px' }}>
+                    <button
+                      onClick={() => setExpandedTaster(isExpanded ? null : taster.userName)}
+                      style={{
+                        background: 'none', border: 'none', flex: 1,
+                        color: 'var(--text-secondary)', fontSize: '0.8rem',
+                        cursor: 'pointer', padding: '6px 0 0',
+                        textAlign: 'center',
+                      }}
+                    >
+                      {isExpanded ? '▲ Hide category breakdown' : '▼ Show category breakdown'}
+                    </button>
+                    <button
+                      onClick={() => setRecapTaster(taster.userName)}
+                      title="Get shareable recap"
+                      style={{
+                        background: 'rgba(245, 158, 11, 0.1)', border: '1px solid rgba(245, 158, 11, 0.25)',
+                        borderRadius: '999px', color: 'var(--amber-light)', fontSize: '0.85rem',
+                        cursor: 'pointer', padding: '6px 12px', flexShrink: 0,
+                      }}
+                    >
+                      📸
+                    </button>
+                  </div>
 
                   {isExpanded && (
                     <div style={{
@@ -727,6 +759,85 @@ export default function ShowdownPage() {
             );
           })}
         </div>
+
+        {/* ===== ARCHETYPE GLOSSARY ===== */}
+        {showGlossary && (
+          <div className="drawer-backdrop" onClick={() => setShowGlossary(false)} />
+        )}
+        {showGlossary && (
+          <div className="drawer-sheet">
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+              <h3 className="title-marker" style={{ fontSize: '1.1rem' }}>📖 Archetype Guide</h3>
+              <button
+                onClick={() => setShowGlossary(false)}
+                style={{ background: 'none', border: 'none', color: 'var(--text-secondary)', fontSize: '1.4rem', cursor: 'pointer', padding: '4px 8px', lineHeight: 1 }}
+              >✕</button>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+              {Object.entries(ARCHETYPE_INFO).map(([name, archInfo]) => (
+                <div key={name} className="glass-panel" style={{ padding: '14px 16px', borderLeft: `3px solid ${archInfo.color}` }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '6px' }}>
+                    <span style={{ fontSize: '1.4rem' }}>{archInfo.emoji}</span>
+                    <span style={{ fontFamily: 'var(--font-display)', fontSize: '1rem', letterSpacing: '1px', color: archInfo.color }}>{name}</span>
+                  </div>
+                  <p style={{ fontSize: '0.85rem', lineHeight: 1.5, color: 'rgba(254, 243, 199, 0.65)', fontStyle: 'italic' }}>
+                    &ldquo;{archInfo.story}&rdquo;
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* ===== SHAREABLE RECAP CARD ===== */}
+        {recapTaster && (() => {
+          const taster = tasterInsights.find(t => t.userName === recapTaster);
+          if (!taster) return null;
+          const info = getArchetypeInfo(taster.archetype);
+          return (
+            <div className="champion-overlay" onClick={() => setRecapTaster(null)}>
+              <div style={{ position: 'relative', zIndex: 1, textAlign: 'center', maxWidth: '420px', padding: '20px' }}>
+                <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginBottom: '6px' }}>{data.session.name}</p>
+                <div style={{ fontSize: '4.5rem', marginBottom: '12px' }}>{info.emoji}</div>
+                <h2 className="title-display" style={{ fontSize: 'clamp(1.8rem, 6vw, 2.6rem)', marginBottom: '4px' }}>{taster.userName}</h2>
+                <p style={{ fontFamily: 'var(--font-marker)', fontSize: '1.2rem', color: info.color, marginBottom: '18px' }}>{taster.archetype}</p>
+                <p style={{
+                  fontSize: '0.95rem', lineHeight: 1.6, color: 'rgba(254, 243, 199, 0.75)', fontStyle: 'italic',
+                  padding: '14px 18px', background: 'rgba(0,0,0,0.25)', borderRadius: '14px',
+                  borderLeft: `3px solid ${info.color}`, marginBottom: '20px',
+                }}>
+                  &ldquo;{info.story}&rdquo;
+                </p>
+                <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', justifyContent: 'center', marginBottom: '16px' }}>
+                  <div className="taster-stat-pill">
+                    <span style={{ color: 'var(--text-secondary)', fontSize: '0.7rem' }}>AVG SCORE</span>
+                    <span style={{ fontFamily: 'var(--font-display)', color: 'var(--amber-light)', fontSize: '1rem' }}>{taster.averageGiven}/20</span>
+                  </div>
+                  {taster.favouriteBeer && (
+                    <div className="taster-stat-pill">
+                      <span style={{ color: 'var(--text-secondary)', fontSize: '0.7rem' }}>❤️ LOVED</span>
+                      <span style={{ fontFamily: 'var(--font-display)', color: 'var(--neon-green)', fontSize: '1rem' }}>{taster.favouriteBeer.name}</span>
+                    </div>
+                  )}
+                  {taster.leastFavouriteBeer && (
+                    <div className="taster-stat-pill">
+                      <span style={{ color: 'var(--text-secondary)', fontSize: '0.7rem' }}>😬 SKIPPED</span>
+                      <span style={{ fontFamily: 'var(--font-display)', color: '#fca5a5', fontSize: '1rem' }}>{taster.leastFavouriteBeer.name}</span>
+                    </div>
+                  )}
+                </div>
+                {taster.agreedWithWinner && (
+                  <div style={{
+                    display: 'inline-block', fontSize: '0.8rem', color: 'var(--neon-green)',
+                    background: 'rgba(74, 222, 128, 0.1)', border: '1px solid rgba(74, 222, 128, 0.2)',
+                    borderRadius: '999px', padding: '4px 12px', marginBottom: '14px',
+                  }}>✓ Called the winner</div>
+                )}
+                <p style={{ color: 'var(--text-secondary)', fontSize: '0.75rem', marginTop: '10px' }}>📸 Screenshot me and share!</p>
+              </div>
+            </div>
+          );
+        })()}
       </div>
     );
   };
@@ -886,6 +997,29 @@ export default function ShowdownPage() {
           {results.length <= 3 && phase === 'waiting' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
               {shuffledResults.map((beer) => renderBeerCard(beer, -1, false, false))}
+            </div>
+          )}
+
+          {/* ===== BEER AWARDS ===== */}
+          {phase === 'done' && data.beerSuperlatives && (
+            <div className="animate-fade-in" style={{ marginTop: '40px' }}>
+              <h2 className="title-marker" style={{ textAlign: 'center', color: 'var(--amber-light)', fontSize: '1.2rem', marginBottom: '16px' }}>
+                🏅 Beer Awards
+              </h2>
+              <div className="insights-superlatives" style={{ gridTemplateColumns: 'repeat(2, minmax(0, 220px))', justifyContent: 'center' }}>
+                <div className="superlative-card" style={{ '--accent': 'var(--neon-pink)' } as React.CSSProperties}>
+                  <div className="superlative-emoji">🌶️</div>
+                  <div className="superlative-title">Most Divisive</div>
+                  <div className="superlative-name">{data.beerSuperlatives.mostDivisive.name}</div>
+                  <div className="superlative-detail">σ = {data.beerSuperlatives.mostDivisive.value}</div>
+                </div>
+                <div className="superlative-card" style={{ '--accent': 'var(--neon-green)' } as React.CSSProperties}>
+                  <div className="superlative-emoji">🤝</div>
+                  <div className="superlative-title">Most Unanimous</div>
+                  <div className="superlative-name">{data.beerSuperlatives.mostUnanimous.name}</div>
+                  <div className="superlative-detail">σ = {data.beerSuperlatives.mostUnanimous.value}</div>
+                </div>
+              </div>
             </div>
           )}
 

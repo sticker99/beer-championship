@@ -147,7 +147,16 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
       });
       
       const maxPossiblePerPerson = 20; // 5 * 4
-      
+
+      // How much did tasters disagree on this beer? Same stdDev calculation
+      // used for per-taster consistency, applied across tasters for one beer.
+      const avgTotal = count > 0 ? totalScore / count : 0;
+      const scoreStdDev = count > 1
+        ? Number(Math.sqrt(
+            individualScores.reduce((sum, s) => sum + (s.total - avgTotal) ** 2, 0) / count
+          ).toFixed(2))
+        : null;
+
       return {
         ...beer,
         index,
@@ -162,12 +171,28 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
           taste: Number((categories.taste / count).toFixed(1)),
           overall: Number((categories.overall / count).toFixed(1))
         } : null,
+        scoreStdDev,
         individualScores,
       };
     });
-    
+
     // 5. Sort by Average Score Descending (with stable tiebreaker by name)
     aggregated.sort((a, b) => b.averageScore - a.averageScore || a.name.localeCompare(b.name));
+
+    // Beer-level superlatives — mirrors the taster superlatives below, but
+    // asks "how much did tasters disagree on this beer" instead of "how
+    // consistent was this person".
+    const divisiveCandidates = aggregated.filter(b => b.ratingCount >= 2 && b.scoreStdDev !== null);
+    let beerSuperlatives: { mostDivisive: { name: string; value: number }; mostUnanimous: { name: string; value: number } } | null = null;
+    if (divisiveCandidates.length >= 2) {
+      const byStdDevDesc = [...divisiveCandidates].sort((a, b) => (b.scoreStdDev! - a.scoreStdDev!) || a.name.localeCompare(b.name));
+      const mostDivisive = byStdDevDesc[0];
+      const mostUnanimous = byStdDevDesc[byStdDevDesc.length - 1];
+      beerSuperlatives = {
+        mostDivisive: { name: mostDivisive.name, value: mostDivisive.scoreStdDev! },
+        mostUnanimous: { name: mostUnanimous.name, value: mostUnanimous.scoreStdDev! },
+      };
+    }
 
     // 6. Compute per-taster insights
     const tasterInsights = allRatings
@@ -379,6 +404,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
       results: aggregated,
       tasterInsights: validInsights,
       superlatives,
+      beerSuperlatives,
     });
     
   } catch (error) {
