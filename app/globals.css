@@ -758,3 +758,27 @@ input[type="range"]::-moz-range-thumb {
   from { transform: translateY(100%); }
   to   { transform: translateY(0); }
 }
+
+/* Themed scrollbar for scrollable drawer content, so it doesn't clash with
+   the dark/amber aesthetic with a default system scrollbar. */
+.drawer-sheet-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(245, 158, 11, 0.35) transparent;
+}
+
+.drawer-sheet-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+
+.drawer-sheet-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.drawer-sheet-scroll::-webkit-scrollbar-thumb {
+  background: rgba(245, 158, 11, 0.35);
+  border-radius: 999px;
+}
+
+.drawer-sheet-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgba(245, 158, 11, 0.55);
+}
