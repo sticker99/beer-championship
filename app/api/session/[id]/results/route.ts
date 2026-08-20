@@ -38,6 +38,66 @@ function safeRating(rating: Record<string, unknown>): Rating {
   };
 }
 
+// Cheap deterministic string hash, used to break exact-tie archetype scores
+// without silently favouring whichever archetype was declared first in the
+// scoring object (which is what Array.sort's stability would otherwise do).
+function hashStr(s: string): number {
+  let h = 0;
+  for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0;
+  return h;
+}
+
+// How much score a taster is allowed to sacrifice, relative to their true
+// best-fit archetype, in order to avoid duplicating an archetype someone
+// else in the session already has. Keeps reassignment honest — never force
+// someone into a wildly bad-fit archetype just for variety's sake.
+const DISHONESTY_MAX = 3.0;
+// Score gap below which two archetypes are considered a genuine tie for a
+// taster — genuine ties are allowed to duplicate rather than being split up.
+const TIE_EPS = 0.05;
+
+// Session-level archetype assignment. Takes every taster's full archetype
+// score vector and assigns one archetype each, preferring to spread distinct
+// archetypes across the group (most-decisive tasters get first pick of the
+// pool) while never forcing a bad-fit archetype just to avoid a duplicate,
+// and always allowing genuine ties/near-ties to duplicate honestly.
+function assignArchetypes(
+  tasters: { userName: string; scores: Record<string, number> }[]
+): Record<string, string> {
+  const withMeta = tasters.map(t => {
+    const sorted = Object.entries(t.scores).sort((a, b) =>
+      b[1] !== a[1] ? b[1] - a[1] : hashStr(t.userName + a[0]) - hashStr(t.userName + b[0])
+    );
+    const margin = sorted.length > 1 ? sorted[0][1] - sorted[1][1] : Infinity;
+    return { userName: t.userName, sorted, margin, topScore: sorted[0][1] };
+  });
+
+  // Most-decisive (least-ambiguous) tasters get first pick of the pool.
+  withMeta.sort((a, b) => b.margin - a.margin);
+
+  const taken = new Set<string>();
+  const result: Record<string, string> = {};
+
+  for (const t of withMeta) {
+    const topTiedCount = t.sorted.filter(([, v]) => t.topScore - v <= TIE_EPS).length;
+
+    let chosen: string | null = null;
+    if (topTiedCount === 1) {
+      for (const [name, score] of t.sorted) {
+        if (!taken.has(name)) {
+          if (t.topScore - score <= DISHONESTY_MAX) chosen = name;
+          break; // first untaken option found; either take it or give up and fall back below
+        }
+      }
+    }
+    if (!chosen) chosen = t.sorted[0][0]; // honest duplicate: genuine tie, exhausted pool, or too dishonest a fit
+    taken.add(chosen);
+    result[t.userName] = chosen;
+  }
+
+  return result;
+}
+
 export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const resolvedParams = await params;
@@ -264,9 +324,6 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
             (1 - norm(stdDev, 0, 5)) * 1,
         };
 
-        const archetype = Object.entries(archetypeScores)
-          .sort((a, b) => b[1] - a[1])[0][0];
-
         return {
           userName,
           averageGiven: avgGiven,
@@ -274,15 +331,27 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
           favouriteBeer: favouriteBeer ? { name: favouriteBeer.beerName, score: favouriteBeer.total } : null,
           leastFavouriteBeer: leastFavouriteBeer ? { name: leastFavouriteBeer.beerName, score: leastFavouriteBeer.total } : null,
           agreedWithWinner,
-          archetype,
+          archetypeScores,
           avgCategories,
           beersRated: ratedCount,
         };
       })
       .filter(Boolean);
 
+    // Session-level archetype assignment: takes every taster's full score
+    // vector and spreads distinct archetypes across the group where honestly
+    // possible, instead of each taster picking their raw independent argmax
+    // (see assignArchetypes for the fairness rules).
+    const rawInsights = tasterInsights.filter(Boolean) as NonNullable<typeof tasterInsights[number]>[];
+    const archetypeAssignment = assignArchetypes(
+      rawInsights.map(t => ({ userName: t.userName, scores: t.archetypeScores }))
+    );
+    const validInsights = rawInsights.map(({ archetypeScores, ...rest }) => ({
+      ...rest,
+      archetype: archetypeAssignment[rest.userName],
+    }));
+
     // Superlatives
-    const validInsights = tasterInsights.filter(Boolean) as NonNullable<typeof tasterInsights[number]>[];
     let superlatives = null;
     if (validInsights.length >= 2) {
       const sorted = [...validInsights];

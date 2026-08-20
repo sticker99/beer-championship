@@ -1,7 +1,8 @@
 'use client';
 
-import { useEffect, useState, Suspense } from 'react';
+import { useEffect, useState, useRef, Suspense } from 'react';
 import { useParams, useRouter, useSearchParams } from 'next/navigation';
+import { loadDraft, saveDraft, clearDraft } from '@/lib/useTastingDraft';
 
 interface Beer {
   name: string;
@@ -59,8 +60,11 @@ function TastingPageInner() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isFinished, setIsFinished] = useState(false);
   const [error, setError] = useState(false);
+  const [submitError, setSubmitError] = useState(false);
   const [view, setView] = useState<TastingView>('rating');
   const [showDrawer, setShowDrawer] = useState(false);
+  const [draftSavedAt, setDraftSavedAt] = useState<number | null>(null);
+  const hydratedRef = useRef(false);
 
   useEffect(() => {
     fetch(`/api/session/${sessionId}`)
@@ -70,6 +74,36 @@ function TastingPageInner() {
         else setSession(data);
       });
   }, [sessionId]);
+
+  // Restore any in-progress draft for this session+user, once, before autosave kicks in.
+  useEffect(() => {
+    if (hydratedRef.current) return;
+    hydratedRef.current = true;
+    const draft = loadDraft(sessionId, userName);
+    if (draft) {
+      setRatings(draft.ratings);
+      setCurrentBeerIndex(draft.currentBeerIndex);
+      setView(draft.view);
+    }
+  }, [sessionId, userName]);
+
+  // A restored beer index could be out of range if the beer list changed since the draft was saved.
+  useEffect(() => {
+    if (session && currentBeerIndex > session.beers.length - 1) {
+      setCurrentBeerIndex(Math.max(0, session.beers.length - 1));
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [session]);
+
+  // Autosave the draft (debounced) so a closed tab doesn't lose progress.
+  useEffect(() => {
+    if (!hydratedRef.current) return;
+    const t = setTimeout(() => {
+      saveDraft(sessionId, userName, { ratings, currentBeerIndex, view });
+      setDraftSavedAt(Date.now());
+    }, 250);
+    return () => clearTimeout(t);
+  }, [ratings, currentBeerIndex, view, sessionId, userName]);
 
   const handleRatingChange = (category: string, value: number) => {
     const defaults = { aroma: 3, appearance: 3, taste: 3, overall: 3 };
@@ -81,16 +115,21 @@ function TastingPageInner() {
 
   const submitAllRatings = async () => {
     setIsSubmitting(true);
+    setSubmitError(false);
     try {
       const res = await fetch('/api/rating/submit', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ sessionId, userName, ratings }),
       });
-      if (res.ok) setIsFinished(true);
-      else alert('Failed to save ratings 😢');
+      if (res.ok) {
+        clearDraft(sessionId, userName);
+        setIsFinished(true);
+      } else {
+        setSubmitError(true);
+      }
     } catch {
-      alert('Error submitting ratings 😢');
+      setSubmitError(true);
     }
     setIsSubmitting(false);
   };
@@ -222,6 +261,20 @@ function TastingPageInner() {
           })}
         </div>
 
+        {submitError && (
+          <div className="glass-panel animate-fade-in" style={{
+            padding: '14px 18px', marginBottom: '16px', textAlign: 'center',
+            border: '1px solid rgba(239, 68, 68, 0.4)', background: 'rgba(239, 68, 68, 0.08)',
+          }}>
+            <p style={{ color: 'var(--danger, #ef4444)', fontSize: '0.95rem', marginBottom: '4px' }}>
+              😢 Couldn&apos;t save your ratings — connection hiccup.
+            </p>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '0.8rem' }}>
+              No worries, your scores are safe on this device. Just try again.
+            </p>
+          </div>
+        )}
+
         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
           <button
             className="btn btn-primary"
@@ -229,7 +282,7 @@ function TastingPageInner() {
             onClick={submitAllRatings}
             disabled={isSubmitting}
           >
-            {isSubmitting ? '🔄 Submitting...' : '🔒 Lock It In!'}
+            {isSubmitting ? '🔄 Submitting...' : submitError ? '🔄 Retry Lock It In!' : '🔒 Lock It In!'}
           </button>
           <button
             className="btn btn-secondary"
@@ -368,6 +421,15 @@ function TastingPageInner() {
           <div className="progress-track">
             <div className="progress-fill" style={{ width: `${progressPercent}%` }} />
           </div>
+          {draftSavedAt !== null && (
+            <div
+              key={draftSavedAt}
+              className="animate-fade-in"
+              style={{ marginTop: '6px', fontSize: '0.75rem', color: 'var(--text-secondary)', textAlign: 'right' }}
+            >
+              💾 saved on this device
+            </div>
+          )}
         </div>
 
         {/* Beer card */}
