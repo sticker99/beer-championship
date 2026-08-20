@@ -13,17 +13,35 @@ const realDb = isMock ? null : new Redis({
 
 const mockStore = new Map<string, any>();
 
+// Retries a Redis call a few times with short exponential backoff, to ride
+// out transient Upstash errors (timeouts, brief rate-limit blips) instead of
+// failing a write on the first hiccup.
+async function withRetry<T>(fn: () => Promise<T>, attempts = 3, baseDelayMs = 150): Promise<T> {
+  let lastErr: unknown;
+  for (let i = 0; i < attempts; i++) {
+    try {
+      return await fn();
+    } catch (err) {
+      lastErr = err;
+      if (i < attempts - 1) {
+        await new Promise(r => setTimeout(r, baseDelayMs * 2 ** i));
+      }
+    }
+  }
+  throw lastErr;
+}
+
 export const db = {
   get: async (key: string) => {
     if (isMock) return mockStore.get(key) || null;
-    return realDb!.get(key);
+    return withRetry(() => realDb!.get(key));
   },
   set: async (key: string, value: any) => {
     if (isMock) {
       mockStore.set(key, value);
       return "OK";
     }
-    return realDb!.set(key, value);
+    return withRetry(() => realDb!.set(key, value));
   },
   sadd: async (key: string, member: string) => {
     if (isMock) {
@@ -31,13 +49,33 @@ export const db = {
       mockStore.get(key).add(member);
       return 1;
     }
-    return realDb!.sadd(key, member);
+    return withRetry(() => realDb!.sadd(key, member));
   },
   smembers: async (key: string) => {
     if (isMock) {
       const set = mockStore.get(key);
       return set ? Array.from(set) : [];
     }
-    return realDb!.smembers(key);
-  }
+    return withRetry(() => realDb!.smembers(key));
+  },
+  // Writes a rating blob and adds the user to the session's participants set
+  // in a single round trip via a Redis MULTI, instead of two independently
+  // awaited calls. Closes the gap where a rating could be saved but the user
+  // never lands in `participants` (making their scores invisible to
+  // /results, which only aggregates over that set) because the second call
+  // failed or the process died between the two writes.
+  submitRating: async (ratingKey: string, ratingValue: any, participantsKey: string, userName: string) => {
+    if (isMock) {
+      mockStore.set(ratingKey, ratingValue);
+      if (!mockStore.has(participantsKey)) mockStore.set(participantsKey, new Set());
+      mockStore.get(participantsKey).add(userName);
+      return ['OK', 1];
+    }
+    return withRetry(() => {
+      const tx = realDb!.multi();
+      tx.set(ratingKey, ratingValue);
+      tx.sadd(participantsKey, userName);
+      return tx.exec();
+    });
+  },
 };

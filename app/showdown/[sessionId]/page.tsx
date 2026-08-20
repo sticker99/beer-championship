@@ -81,72 +81,72 @@ const ARCHETYPE_INFO: Record<string, ArchetypeInfo> = {
   'The Diplomat': {
     emoji: '🤝',
     color: 'var(--neon-green)',
-    story: 'Refuses to start drama at the tasting table. Gives every beer a polite minimum and genuinely believes they all have something special. Probably brought a cheese board to maintain peace.',
+    story: 'Rated every beer between 3.5 and 4, no exceptions — pure peacekeeper energy. Would rather drink a bathtub of lukewarm Tiger than admit one beer was worse than another. If drama breaks out at this table, it\'s because they refused to pick a side.',
   },
   'The Perfectionist': {
     emoji: '🎯',
     color: 'var(--neon-blue)',
-    story: 'Has a spreadsheet at home tracking every beer they\'ve ever tried. Will dock points for a slightly murky head. Once returned a perfectly good pint because "the carbonation was off".',
+    story: 'Brought actual tasting notes on their phone. Docked half a point because the pour "wasn\'t steady." Will mention this to the brewery given the chance. Has never once said "ya this is a 5/5" about anything, including their own wedding.',
   },
   'The Contrarian': {
     emoji: '🤪',
     color: 'var(--neon-pink)',
-    story: 'If the group loves it, they\'re suspicious. Their favourite beer was a limited edition sour that tasted like wet socks to everyone else. They called it "complex with a challenging finish".',
+    story: 'Everyone\'s unanimous favourite? Rated it a 2, on principle. Loved the weird one that tasted faintly of expired soy sauce. Will explain, unprompted, why everyone else\'s palate is a bit sheltered.',
   },
   'The Cheerleader': {
     emoji: '📣',
     color: 'var(--amber-light)',
-    story: 'Enthusiastically gave a 4.5 to the first beer before even tasting it. Every sip is met with "Ooh, that\'s actually really good!" Probably also rates their Uber driver 5 stars before getting in.',
+    story: 'Hit 4.5 on beer #1 before it even touched their tongue. Every single beer "might genuinely be the best one yet." Same energy as giving a Grab driver 5 stars before the trip even starts. National treasure, deeply untrustworthy judge.',
   },
   'The Critic': {
     emoji: '🧐',
     color: 'var(--neon-blue)',
-    story: 'Watched three YouTube videos about craft beer before arriving. Uses words like "astringent" and "diacetyl" in casual conversation. Once described a beer as "competent but uninspiring" at a birthday party.',
+    story: 'Used the word "astringent" with a completely straight face. Called an $8 six-pack "competent, if uninspired" — confirm never once eaten at a coffeeshop in their life. Still somehow finished every glass.',
   },
   'The Nose': {
     emoji: '👃',
     color: 'var(--amber)',
-    story: 'Will stick their entire face into the glass before taking a sip. Has strong opinions about dry-hopping schedules. Once cancelled plans because their neighbour was mowing the lawn and they couldn\'t "clear their palate".',
+    story: 'Face-first into the glass before anyone else had even picked theirs up. Detected "a faint whiff of wet cardboard" on beer #2 that nobody else caught — and was, infuriatingly, correct.',
   },
   'The Aesthete': {
     emoji: '🎨',
     color: 'var(--neon-pink)',
-    story: 'Judged a beer undrinkable because it wasn\'t the right shade of golden. Has been known to hold the glass up to the light for 30+ seconds. Their camera roll is 60% beer photos, artfully arranged with moody lighting.',
+    story: 'Held the glass up to the light for a solid 20 seconds like it owed them money. Docked marks for "unconvincing foam." Camera roll is 60% beer photos, all suspiciously well-lit.',
   },
   'The Sommelier': {
     emoji: '🍷',
     color: 'var(--neon-green)',
-    story: 'Takes tiny sips and actually swirls the beer. Has used the phrase "I\'m getting notes of" without irony. Owns a book called The Flavour Bible and has read it. Twice.',
+    story: 'Sipped like it was Ba Kut Teh soup at a family dinner — slow, deliberate, the occasional respectful pause. Used the phrase "notes of" completely unironically. Definitely owns a decanter meant for beer.',
   },
   'The Vibes Guru': {
     emoji: '✨',
     color: 'var(--amber-light)',
-    story: 'Doesn\'t care about technique — they\'re rating the experience, man. Their scores correlate directly with how much fun they\'re having. Once gave a mediocre beer a 5 because the song on the radio was a certified banger.',
+    story: 'Scoring methodology: how good was the playlist, how good was the company, did someone just crack a genuinely great joke. Gave a mid beer a 5 because the mood was simply immaculate. Couldn\'t tell you what an IPA stands for. Doesn\'t need to.',
   },
   'The Taster': {
     emoji: '🍺',
     color: 'var(--text-secondary)',
-    story: 'Showed up, drank beer, gave scores. Respects the process. Didn\'t overthink it. Honestly, the most relatable person in the room and possibly the most reliable judge of all.',
+    story: 'Drank the beer. Rated the beer. Moved to the next beer. No notes app, no swirling, no ten-minute monologue about mouthfeel — just someone doing the one job assigned to them, correctly, all night. A hero, honestly.',
   },
   'The Aficionado': {
     emoji: '🏅',
     color: 'var(--amber)',
-    story: 'Reads the tap list before sitting down and has Opinions about hop varieties. Quietly pleased when the group agreed with their pick. Will mention they knew from the first sip for the rest of the evening.',
+    story: 'Read the whole beer list before anyone else had opened their mouth, already had a top 3 picked out. Nodded knowingly the moment the group\'s winner matched their prediction. Will bring this up again at the next gathering.',
   },
   'The Hawk': {
     emoji: '🦅',
     color: 'var(--neon-blue)',
-    story: 'Has absolutely zero interest in giving a middling score. Their rating range goes from this is a crime against hops to I would bathe in this. No nuance, no mercy, no regrets. Somehow always right.',
+    story: 'Only two settings: "life-changing" and "certified crime against hops." No middle ground, like an uncle\'s driving. Somehow their extreme scores ended up more accurate than everyone\'s cautious middle-of-the-road 3s.',
   },
   'The Bon Vivant': {
     emoji: '🥂',
     color: 'var(--neon-green)',
-    story: 'Could not explain what makes a beer technically good but knows exactly what makes an evening great. Scores the atmosphere as much as the beer. Solely responsible for extending this tasting by at least 45 minutes.',
+    story: 'Couldn\'t describe a single hop note but single-handedly turned a 45-minute tasting into a 2-hour lepak session. Scored the beer, the conversation, and the lighting as one combined experience. Reason the group chat is still active the next morning.',
   },
   'The Sensualist': {
     emoji: '🌸',
     color: 'var(--neon-pink)',
-    story: 'Closes their eyes for the first sip. Swirls. Sniffs. Thinks. Their palate works in layers — first the nose, then the body, then the finish. Does not understand how anyone can drink without paying full attention.',
+    story: 'Closed their eyes for the first sip like it was a moment of prayer. Nose, then body, then finish, every time, no exceptions. Personally offended by anyone who just chugged the whole can.',
   }
 };
 
@@ -158,6 +158,7 @@ export default function ShowdownPage() {
   const params = useParams();
   const sessionId = String(params.sessionId).toUpperCase();
   const [data, setData] = useState<ShowdownData | null>(null);
+  const [fetchError, setFetchError] = useState(false);
   const [phase, setPhase] = useState<RevealPhase>('waiting');
   const [refreshing, setRefreshing] = useState(false);
   const [confettiPieces, setConfettiPieces] = useState<Array<{ left: number; color: string; delay: number; duration: number; size: number; shape: string }>>([]);
@@ -170,9 +171,18 @@ export default function ShowdownPage() {
 
   const fetchResults = useCallback(async () => {
     setRefreshing(true);
-    const res = await fetch(`/api/session/${sessionId}/results`);
-    const json = await res.json();
-    if (!json.error) setData(json);
+    try {
+      const res = await fetch(`/api/session/${sessionId}/results`);
+      const json = await res.json();
+      if (!json.error) {
+        setData(json);
+        setFetchError(false);
+      } else {
+        setFetchError(true);
+      }
+    } catch {
+      setFetchError(true);
+    }
     setRefreshing(false);
   }, [sessionId]);
 
@@ -213,6 +223,19 @@ export default function ShowdownPage() {
     }));
     setConfettiPieces(pieces);
   };
+
+  if (!data && fetchError) return (
+    <main className="container" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', textAlign: 'center' }}>
+      <div className="glass-panel animate-fade-in" style={{ maxWidth: '450px' }}>
+        <div style={{ fontSize: '4rem', marginBottom: '16px' }}>😵</div>
+        <h2 className="title-marker" style={{ color: 'var(--danger, #ef4444)', marginBottom: '16px' }}>Couldn&apos;t Load Results</h2>
+        <p style={{ color: 'var(--text-secondary)', marginBottom: '20px' }}>Connection hiccup — your scores are safe. Try again.</p>
+        <button onClick={fetchResults} className="btn btn-primary" disabled={refreshing}>
+          {refreshing ? '🔄 Retrying...' : '🔄 Try Again'}
+        </button>
+      </div>
+    </main>
+  );
 
   if (!data) return (
     <main className="container" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '100vh', textAlign: 'center' }}>
